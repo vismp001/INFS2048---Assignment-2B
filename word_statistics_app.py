@@ -35,8 +35,8 @@ class ConsoleApp():
     @click.argument("input_paths", required=True, type=click.Path(exists=True), nargs=-1)
     def main(number, output_spec, input_paths):
         """Main entry point of the console application."""
-        print(output_spec, type(output_spec['out.txt']))
-        print(input_paths, type(input_paths[1]))
+        #print(output_spec, type(output_spec['out.txt']))
+        #print(input_paths, type(input_paths[1]))
 
 
 # Encapsulated in the WordStatsManager component
@@ -259,7 +259,7 @@ class Formatting():
         pass
 
     def getFormatTypeFromExtension(self, fileExtension:str) -> FormatType:
-        pass
+        return self.__extensionToFormatType[fileExtension]
 
 class CSVFormat(FormatType):
     def __init__(self):
