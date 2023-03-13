@@ -43,10 +43,3 @@ def test_returnsCorrectFormatTypeCSV(setupFormatting:Formatting):
 def test_formattingGeneratesOutputString(setupFormatting:Formatting, setupDescriptors):
     output:str = setupFormatting.generateOutput('file1.txt', setupDescriptors, TXTFormat())
     assert isinstance(output, str)
-    #+ generateOutput(filename:str, descriptorInformation:list(DescriptorInfo), formatType:FormatType)
-
-# -
-# - extensionToFormatType : dict<string, FormatType>
-# -
-# + generateOutput(filename:str, descriptorInformation:list(DescriptorInfo), formatType:FormatType)
-# + getFormatTypeFromExtension(fileExtension:string) : FormatType
