@@ -173,7 +173,7 @@ class WordCount(Descriptor):
 # Encapsulated in the Tokenising component
 class Filter(ABC):
     '''Responsible for filtering tokens'''
-    def __init__(self):
+    def __init__(self, inclusions:list[str]):
         pass
 
     @abstractclassmethod
@@ -181,45 +181,60 @@ class Filter(ABC):
         '''Applies the filter to the given string word. If it returns true, the word passes the filter'''
         pass
 
+class BlacklistFilter(Filter):
+    def __init__(self, inclusions:list[str]):
+        self.__inclusions = inclusions
+
+    def applyFilter(self, uniqueWord:str):
+        return uniqueWord in self.__inclusions and True or False
+
+class WhitelistFilter(Filter):
+    def __init__(self, inclusions:list[str]):
+        self.__inclusions = inclusions
+
+    def applyFilter(self, uniqueWord:str):
+        return uniqueWord not in self.__inclusions and True or False
+
 class TokenizeBehaviour(ABC):
     '''The behaviour defined for tokenizing a string into a list of tokens'''
     def __init__():
         pass
 
     @abstractclassmethod
-    def tokenize(self, rawString:str) -> list[str]:
+    def tokenize(self, rawText:str) -> list[str]:
         '''Split string into usable tokens'''
         pass
 
 class Tokeniser():
     '''Handles filtering tokens and the tokenizing proccess'''
-    def __init__(self, rawString:str):
+    def __init__(self, rawText:str):
         self.__filters:list[Filter] = []
-        self.__rawString:str = rawString
+        self.__rawText:str = rawText
 
     def addFilter(self, filter:Filter):
         '''Adds a filter to the list of filters being applied'''
-        pass
+        self.__filters.append(filter)
 
     def tokenize(self, tokenBehaviour:TokenizeBehaviour) -> list[str]: # returns an ordered list of words as string
         '''Seperates a single string into an interpreted list of string tokens'''
-        pass
+        return tokenBehaviour.tokenize(self.__rawText)
 
 class WhiteSpaceSeperator(TokenizeBehaviour):
-    def __init__():
+    def __init__(self):
         pass
 
-    def tokenize(self, rawString: str) -> list[str]:
-        pass
+    def tokenize(self, rawText:str) -> list[str]:
+        return str.split(rawText, ' ')
 
 class Tokenising():
     '''Responsible for creating new Tokenisers, which are used to split words into tokens'''
     def __init__(self):
         pass
 
-    def createTokeniser(self, rawText : str) -> Tokeniser:
+    def createTokeniser(self, rawText:str) -> Tokeniser:
         '''Creates a Tokeniser, responsible for splitting text into tokens strings that are neccesary in calculating statistics'''
-        pass
+        tokeniser:Tokeniser = Tokeniser(rawText)
+        return tokeniser
 
 
 class FormatType(ABC):
