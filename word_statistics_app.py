@@ -77,9 +77,6 @@ class Descriptor(ABC):
         '''Describes the statistics associated to the descriptors meaning. RankAmount specifies how many results to return within a limit.'''
         pass
 
-    def getDescriptorName(self) -> str:
-        return self.descriptorName
-
 class DuplicateDescriptorException(Exception):
     def __init__(self):
         super().__init__("Cannot add a duplicate descriptor to the same summary")
@@ -89,7 +86,7 @@ class Summary():
     def __init__(self):
         self.__descriptors:list[Descriptor] = []
 
-    def addDescriptor(self, descriptor:Descriptor, rankAmount:int) -> DescriptorInfo:
+    def addDescriptor(self, descriptor:Descriptor, topResults:int) -> DescriptorInfo:
         '''Analyzes and adds a descriptor to the summary'''
         duplicateDescriptorFound:bool = False
         descriptorIndex:int = 0
@@ -120,33 +117,52 @@ class WordFrequency(Descriptor):
     def __init__(self):
         self.descriptorName = 'Word Frequency'
 
-    def describe(self, tokens:list[str], rankAmount:int=4) -> DescriptorInfo:
+    def describe(self, tokens:list[str], topResults:int=4) -> DescriptorInfo:
         frequencyOfWords:dict = dict()
 
-        # Generates token frequency dictionary
+        # Generates and sorts token frequency dictionary
         for token in tokens:
             if frequencyOfWords.get(token) == None:
                 frequencyOfWords[token] = 0
             frequencyOfWords[token] += 1
-        
-        # Generate a written description for token frequency
+
+        frequencyOfWords = {token: frequency for token, frequency in sorted(frequencyOfWords.items(), key = lambda value: value[1], reverse = True)}
+       
+        # Only grab top results
+        limitedResultsFrequencyOfWords:dict = {}
+        if topResults == -1:
+            limitedResultsFrequencyOfWords = frequencyOfWords
+        else:
+            tokenIndex:int = 0
+            for token, frequency in frequencyOfWords.items():
+                limitedResultsFrequencyOfWords[token] = frequency
+                tokenIndex += 1
+                if tokenIndex >= topResults:
+                    break
+            
+        # Generate a written description based on setup
         listedFrequencies:list[str] = []
-        for token, frequency in frequencyOfWords.items():
+        for token, frequency in limitedResultsFrequencyOfWords.items():
             singularWrittenFrequency = token + '(' + str(frequency) + ')'
             listedFrequencies.append(singularWrittenFrequency)
         frequenciesWritten = str.join(', ', listedFrequencies)
 
         readOrder:int = 2
         description:str = f"Frequent words are: {frequenciesWritten}"
-        return DescriptorInfo(readOrder, description, frequencyOfWords)
+        return DescriptorInfo(readOrder, description, limitedResultsFrequencyOfWords)
 
 class WordCount(Descriptor):
     def __init__(self):
         self.descriptorName = 'Word Count'
-        print(self.descriptorName)
     
-    def describe(self, tokens:list[str], rankAmount:int=-1) -> DescriptorInfo:
-        wordCount = 0
+    def describe(self, tokens:list[str], topResults:int=-1) -> DescriptorInfo:
+        # Count all tokens, otherwise counts up to the top results specified and stops
+        wordCount:int
+        wordTotal = len(tokens)
+        if topResults == -1 or wordTotal < topResults:
+            wordCount = len(tokens)
+        else:
+            wordCount = topResults
         
         readOrder:int = 1
         description:str = f"Contains {wordCount} words."

@@ -27,10 +27,12 @@ def test_addDescriptor(setupSummary:Summary):
     setupSummary.addDescriptor(WordCount(), -1)
     descriptors = setupSummary.getDescriptors()
     firstDescriptor = descriptors[0]
-    assert(firstDescriptor.getDescriptorName() == 'Word Count')
+
+    assert(firstDescriptor.descriptorName == 'Word Count')
 
 def test_duplicateDescriptor(setupSummary:Summary):
     setupSummary.addDescriptor(WordCount(), -1)
+
     with pytest.raises(DuplicateDescriptorException):
         setupSummary.addDescriptor(WordCount(), 2)
 
@@ -48,8 +50,6 @@ def test_descriptorDescriptionExists(setupTokens):
 
 def test_descriptorValueExists(setupTokens):
     descriptor:Descriptor = WordFrequency()
-    descriptorInfo:DescriptorInfo = descriptor.describe(setupTokens)
-
+    descriptorInfo:DescriptorInfo = descriptor.describe(setupTokens, -1)
+    
     assert(descriptorInfo.description is not None)
-
-# def test_descriptorNegativeTopResultsReadsAll(newSummary:Summary):
