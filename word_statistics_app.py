@@ -331,21 +331,45 @@ class FileAccess():
 
     def performImport(fileMethod:FileMethod, path:str) -> bool | str:
         '''Perform the import method for the specified FileMethod and path'''
-        pass
+        success, source:str = fileMethod.importFile(path)
 
     def performExport(fileMethod:FileMethod, path:str, source:str) -> bool:
         '''Perform the export method for the specified FileMethod, path and new document source'''
-        pass
+        success:bool = fileMethod.exportFile(path, source)
 
 class Local(FileMethod):
     def __init__(self):
         pass
     
     def importFile(self, path:str):
-        pass
+        success:bool
+        source:str
+
+        try:
+            file = open(path, 'r')
+            fileSource:str = file.read()
+            file.close()
+
+            source = fileSource
+            success = True
+        except:
+            source = ""
+            success = False
+        
+        return success, source
 
     def exportFile(self, path:str, source:str):
-        pass
+        success:bool
+        
+        try:
+            file = open(path, 'w+')
+            file.write(source)
+            file.close()
+            success = True
+        except:
+            success = False
+        
+        return success
 
 # Main entry point to the application
 if __name__ == '__main__':
