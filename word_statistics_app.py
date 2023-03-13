@@ -143,7 +143,7 @@ class WordFrequency(Descriptor):
         # Generate a written description based on setup
         listedFrequencies:list[str] = []
         for token, frequency in limitedResultsFrequencyOfWords.items():
-            singularWrittenFrequency = token + '(' + str(frequency) + ')'
+            singularWrittenFrequency = token + ' (' + str(frequency) + ')'
             listedFrequencies.append(singularWrittenFrequency)
         frequenciesWritten = str.join(', ', listedFrequencies)
 
@@ -165,7 +165,7 @@ class WordCount(Descriptor):
             wordCount = topResults
         
         readOrder:int = 1
-        description:str = f"Contains {wordCount} words."
+        description:str = f"Contains {wordCount} words"
         value = wordCount
         return DescriptorInfo(readOrder, description, value)
 
@@ -265,15 +265,46 @@ class CSVFormat(FormatType):
     def __init__(self):
         pass
 
-    def interpret(self, descriptorInformation:list[DescriptorInfo]) -> str:
-        pass
+    def interpret(self, fileName:str, descriptorInformation:list[DescriptorInfo]) -> str:
+        interpretedCollection = [fileName]
+
+        for descriptorInfo in descriptorInformation:
+            descriptorValue:any = descriptorInfo.value
+
+            # Prepare key value pairs interpreter or just output value
+            if isinstance(descriptorValue, dict):
+                for interpretedKey, interpretedValue in descriptorValue.items():
+                    interpretedCollection.append(str(interpretedKey))
+                    interpretedCollection.append(str(interpretedValue))
+            else:
+                interpretedCollection.append(str(descriptorInfo.value))
+        
+        interpreted:str = str.join(',', interpretedCollection)
+        return interpreted
+
 
 class TXTFormat(FormatType):
     def __init__(self):
         pass
 
-    def interpret(self, descriptorInformation:list[DescriptorInfo]) -> str:
-        pass
+    def interpret(self, fileName:str, descriptorInformation:list[DescriptorInfo]) -> str:
+        interpretedCollection = []
+
+        for descriptorInfo in descriptorInformation:
+            description:str = descriptorInfo.description
+            interpretedCollection.append(description)
+        
+        interpreted:str = f"File {fileName} "
+
+        # lowercase first letter to join it onto the first sentence
+        firstSentence:str = interpretedCollection[0]
+        firstSentence = firstSentence[0].lower() + firstSentence[1:]
+        interpretedCollection[0] = firstSentence
+
+        # Join onto the rest of the output
+        interpreted = interpreted + str.join('. ', interpretedCollection)
+
+        return interpreted
 
 # Encapsulated in FileAccess component
 class FileMethod(ABC):
