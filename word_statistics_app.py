@@ -120,16 +120,38 @@ class WordFrequency(Descriptor):
     def __init__(self):
         self.descriptorName = 'Word Frequency'
 
-    def describe(self, tokens:list[str], rankAmount:int=1) -> dict:
-        pass
+    def describe(self, tokens:list[str], rankAmount:int=4) -> DescriptorInfo:
+        frequencyOfWords:dict = dict()
+
+        # Generates token frequency dictionary
+        for token in tokens:
+            if frequencyOfWords.get(token) == None:
+                frequencyOfWords[token] = 0
+            frequencyOfWords[token] += 1
+        
+        # Generate a written description for token frequency
+        listedFrequencies:list[str] = []
+        for token, frequency in frequencyOfWords.items():
+            singularWrittenFrequency = token + '(' + str(frequency) + ')'
+            listedFrequencies.append(singularWrittenFrequency)
+        frequenciesWritten = str.join(', ', listedFrequencies)
+
+        readOrder:int = 2
+        description:str = f"Frequent words are: {frequenciesWritten}"
+        return DescriptorInfo(readOrder, description, frequencyOfWords)
 
 class WordCount(Descriptor):
     def __init__(self):
         self.descriptorName = 'Word Count'
         print(self.descriptorName)
     
-    def describe(self, tokens:list[str], rankAmount:int=1) -> int:
-        pass
+    def describe(self, tokens:list[str], rankAmount:int=-1) -> DescriptorInfo:
+        wordCount = 0
+        
+        readOrder:int = 1
+        description:str = f"Contains {wordCount} words."
+        value = wordCount
+        return DescriptorInfo(readOrder, description, value)
 
 
 # Encapsulated in the Tokenising component
