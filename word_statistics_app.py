@@ -34,7 +34,7 @@ class ConsoleApp():
     @click.option("--output", "output_spec", required=True, multiple=True, type=click.Path(), callback=validate_output_paths, help="Path of an output file. The extension (.txt or .csv) determines the output format.")
     @click.argument("input_paths", required=True, type=click.Path(exists=True), nargs=-1)
     def main(number, output_spec, input_paths):
-        """Main entry point of the console application."""
+        '''Main entry point of the console application.'''
         #print(output_spec, type(output_spec['out.txt']))
         #print(input_paths, type(input_paths[1]))
 
@@ -254,12 +254,14 @@ class Formatting():
             'txt': TXTFormat(),
         }
 
-    def generateOutput(self, descriptorInformation:list[DescriptorInfo], formatType:FormatType) -> str:
+    def generateOutput(self, fileName:str, descriptorInformation:list[DescriptorInfo], formatType:FormatType) -> str:
         '''Generates output from a list of Descriptor Info, and the format type for the expected output file'''
-        pass
+        formatttedText:str = formatType.interpret(fileName, descriptorInformation)
+        return formatttedText
 
     def getFormatTypeFromExtension(self, fileExtension:str) -> FormatType:
-        return self.__extensionToFormatType[fileExtension]
+        formatType:FormatType = self.__extensionToFormatType[fileExtension]
+        return formatType
 
 class CSVFormat(FormatType):
     def __init__(self):
