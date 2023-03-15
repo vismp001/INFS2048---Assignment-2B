@@ -26,9 +26,9 @@ def test_createSummary(setupSummary:Summary):
 def test_addDescriptor(setupSummary:Summary):
     setupSummary.addDescriptor(WordCount(), -1)
     descriptors = setupSummary.getDescriptors()
-    firstDescriptor = descriptors[0]
-
-    assert(firstDescriptor.descriptorName == 'Word Count')
+    firstDescriptorInfo = descriptors[0]
+    
+    assert(firstDescriptorInfo.readOrder == 1)
 
 def test_duplicateDescriptor(setupSummary:Summary):
     setupSummary.addDescriptor(WordCount(), -1)
