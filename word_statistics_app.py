@@ -26,31 +26,18 @@ def validate_output_paths(_ctx, _param, paths):
 
 # Encapsulated in the ConsoleApp component
 class ConsoleApp():
-    def __init__(self):
-        self.__wordStatsManager
+    def __init__(self, wordStatsManagerAccess):
+        self.__wordStatsManager:WordStatsManager = wordStatsManagerAccess
 
-    @click.command(no_args_is_help=True)
-    @click.option("--number", default=10, type=click.IntRange(min=1), help="Maximum number of frequent words to include")
-    @click.option("--output", "output_spec", required=True, multiple=True, type=click.Path(), callback=validate_output_paths, help="Path of an output file. The extension (.txt or .csv) determines the output format.")
-    @click.argument("input_paths", required=True, type=click.Path(exists=True), nargs=-1)
-    def main(number, output_spec, input_paths):
+    def main(self, number, output_spec:dict, input_paths):
         '''Main entry point of the console application.'''
-        #print(output_spec, type(output_spec['out.txt']))
-        #print(input_paths, type(input_paths[1]))
+        
+        # Standardize input and output paths to single datatype which is iterable
+        inputPaths:list = list(input_paths)
+        outputPaths:list = list(output_spec.keys())
 
-
-# Encapsulated in the WordStatsManager component
-class WordStatsManager():
-    def __init__(self):
-        pass
-
-    def proccess(self, inputPath:str, outputPath:str, frequencyRankAmount:int):
-        '''Proccess and provide a summary for single input and output path at a time'''
-        pass
-
-    def proccessMultiple(self, inputPaths:list, outputPaths:list, frequencyRankAmount:int):
-        '''Proccess, and provide a summary for multiple input or output paths at a time'''
-        pass
+        # Analyze document and output results
+        self.__wordStatsManager.proccess(inputPaths, outputPaths, 4)
 
 
 # Encapsulated in the Summarising component
@@ -83,8 +70,9 @@ class DuplicateDescriptorException(Exception):
 
 class Summary():
     '''Analyzes a document and generates statistics based on provided descriptors'''
-    def __init__(self):
+    def __init__(self, tokens:list[str]):
         self.__descriptors:list[Descriptor] = []
+        self.__tokens:list[str] = tokens
 
     def addDescriptor(self, descriptor:Descriptor, topResults:int) -> DescriptorInfo:
         '''Analyzes and adds a descriptor to the summary'''
@@ -96,12 +84,18 @@ class Summary():
             proccessedDescriptor = self.__descriptors[descriptorIndex]
             if proccessedDescriptor.descriptorName == descriptor.descriptorName:
                 raise DuplicateDescriptorException()
-            
+            descriptorIndex += 1
+        
         self.__descriptors.append(descriptor)
 
-    def getDescriptors(self) -> list[Descriptor]:
-        '''Returns a list of descriptors'''
-        return self.__descriptors.copy()
+    def getDescriptors(self) -> list[DescriptorInfo]:
+        '''Returns a list of descriptions via DescriptorInfo'''
+        descriptorInformation:list[DescriptorInfo] = []
+        for descriptor in self.__descriptors:
+            descriptorInfo:DescriptorInfo = descriptor.describe(self.__tokens)
+            descriptorInformation.append(descriptorInfo)
+
+        return descriptorInformation
 
 class Summarising():
     '''Creates the summary object, which is used to read statistics on new documents'''
@@ -110,7 +104,7 @@ class Summarising():
     
     def createSummary(self, tokens:list[str]) -> Summary:
         '''Creates a Summary given a list of string tokens'''
-        newSummary:Summary = Summary()
+        newSummary:Summary = Summary(tokens)
         return newSummary
 
 class WordFrequency(Descriptor):
@@ -126,9 +120,10 @@ class WordFrequency(Descriptor):
                 frequencyOfWords[token] = 0
             frequencyOfWords[token] += 1
 
+        # Sort the frequency of tokens in order of frequency
         frequencyOfWords = {token: frequency for token, frequency in sorted(frequencyOfWords.items(), key = lambda value: value[1], reverse = True)}
-       
-        # Only grab top results
+        
+        # Only grab top results specified by topResults parameter
         limitedResultsFrequencyOfWords:dict = {}
         if topResults == -1:
             limitedResultsFrequencyOfWords = frequencyOfWords
@@ -136,11 +131,12 @@ class WordFrequency(Descriptor):
             tokenIndex:int = 0
             for token, frequency in frequencyOfWords.items():
                 limitedResultsFrequencyOfWords[token] = frequency
-                tokenIndex += 1
                 if tokenIndex >= topResults:
                     break
+
+                tokenIndex += 1
             
-        # Generate a written description based on setup
+        # Generate a description for word frequencies within the document
         listedFrequencies:list[str] = []
         for token, frequency in limitedResultsFrequencyOfWords.items():
             singularWrittenFrequency = token + ' (' + str(frequency) + ')'
@@ -217,14 +213,16 @@ class Tokeniser():
 
     def tokenize(self, tokenBehaviour:TokenizeBehaviour) -> list[str]: # returns an ordered list of words as string
         '''Seperates a single string into an interpreted list of string tokens'''
-        return tokenBehaviour.tokenize(self.__rawText)
+        tokenizedText:list[str] = tokenBehaviour.tokenize(self.__rawText)
+        return tokenizedText
 
 class WhiteSpaceSeperator(TokenizeBehaviour):
     def __init__(self):
         pass
 
     def tokenize(self, rawText:str) -> list[str]:
-        return str.split(rawText, ' ')
+        splitText:list[str] = str.split(rawText)
+        return splitText
 
 class Tokenising():
     '''Responsible for creating new Tokenisers, which are used to split words into tokens'''
@@ -250,8 +248,8 @@ class Formatting():
     '''Manages generating statistical output and for the extension type'''
     def __init__(self):
         self.__extensionToFormatType = {
-            'csv': CSVFormat(),
-            'txt': TXTFormat(),
+            '.csv': CSVFormat(),
+            '.txt': TXTFormat(),
         }
 
     def generateOutput(self, fileName:str, descriptorInformation:list[DescriptorInfo], formatType:FormatType) -> str:
@@ -329,13 +327,14 @@ class FileAccess():
     def __init__(self):
         pass
 
-    def performImport(fileMethod:FileMethod, path:str) -> bool | str:
+    def performImport(self, fileMethod:FileMethod, path:str) -> bool | str:
         '''Perform the import method for the specified FileMethod and path'''
-        success, source:str = fileMethod.importFile(path)
+        source = fileMethod.importFile(path)
+        return source
 
-    def performExport(fileMethod:FileMethod, path:str, source:str) -> bool:
+    def performExport(self, fileMethod:FileMethod, path:str, source:str) -> bool:
         '''Perform the export method for the specified FileMethod, path and new document source'''
-        success:bool = fileMethod.exportFile(path, source)
+        fileMethod.exportFile(path, source)
 
 class Local(FileMethod):
     def __init__(self):
@@ -356,7 +355,7 @@ class Local(FileMethod):
             source = ""
             success = False
         
-        return success, source
+        return source
 
     def exportFile(self, path:str, source:str):
         success:bool
@@ -368,10 +367,69 @@ class Local(FileMethod):
             success = True
         except:
             success = False
+
+
+# Encapsulated in the WordStatsManager component
+class WordStatsManager():
+    def __init__(self, summarisingAccess, tokenisingAccess, formattingAccess, fileAccess:FileAccess):
+        self.__summarising:Summarising = summarisingAccess
+        self.__tokenising:Tokenising = tokenisingAccess
+        self.__formatting:Formatting = formattingAccess
+        self.__fileAcess:FileAccess = fileAccess
+
+    def proccess(self, inputPaths:list[str], outputPaths:list[str], frequencyRankAmount:int):
+        '''Proccess and provide a summary for single input and output path at a time'''
+        for outputPath in outputPaths:
+            outputLines:list[str] = []
+            for inputPath in inputPaths:
+                # Check if the file was successfully imported and get its text source
+                rawText = self.__fileAcess.performImport(Local(), inputPath)
+
+                # Split text based on whitespace between words in the document
+                tokeniser:Tokeniser = self.__tokenising.createTokeniser(rawText)
+                tokens:list[str] = tokeniser.tokenize(WhiteSpaceSeperator())
+
+                # Introduce descriptors, which describe, and analyze the document
+                wordCountDescriptor:Descriptor = WordCount()
+                wordFrequencyDescriptor:Descriptor = WordFrequency()
+
+                # Generate summary from tokens and add descriptors to them
+                summary:Summary = self.__summarising.createSummary(tokens)
+                summary.addDescriptor(wordCountDescriptor, -1)
+                summary.addDescriptor(wordFrequencyDescriptor, 4)
+                descriptorInformation:list[DescriptorInfo] = summary.getDescriptors()
+
+                # Get extension type and get input fileName without parent directories
+                _baseInput, inputExtension = os.path.splitext(inputPath)
+                _baseOutput, outputExtension = os.path.splitext(outputPath)
+                inputFileName:str = _baseInput + inputExtension
+
+                # Format text to the corresponding filetype
+                formatType:FormatType = self.__formatting.getFormatTypeFromExtension(outputExtension.lower())
+                outputText:str = self.__formatting.generateOutput(inputFileName, descriptorInformation, formatType)
+
+                # Add to list of output lines
+                outputLines.append(outputText)
+
+            # Generate combined output and export to a new file
+            source:str = str.join('\n', outputLines)
+            self.__fileAcess.performExport(Local(), outputPath, source)
         
-        return success
+@click.command(no_args_is_help=True)
+@click.option("--number", default=10, type=click.IntRange(min=1), help="Maximum number of frequent words to include")
+@click.option("--output", "output_spec", required=True, multiple=True, type=click.Path(), callback=validate_output_paths, help="Path of an output file. The extension (.txt or .csv) determines the output format.")
+@click.argument("input_paths", required=True, type=click.Path(exists=True), nargs=-1)
+def main(number, output_spec:dict, input_paths):
+    __consoleApp.main(number, output_spec, input_paths)
 
 # Main entry point to the application
 if __name__ == '__main__':
-    consoleApp:ConsoleApp = ConsoleApp()
-    consoleApp.main()
+    # Instansiate services
+    __summarisingAccess:Summarising = Summarising()
+    __tokenisingAccess = Tokenising()
+    __formattingAccess = Formatting()
+    __fileAccess = FileAccess()
+    __wordStatsManagerAccess = WordStatsManager(__summarisingAccess, __tokenisingAccess, __formattingAccess, __fileAccess)
+    __consoleApp:ConsoleApp = ConsoleApp(__wordStatsManagerAccess)
+
+    main()
