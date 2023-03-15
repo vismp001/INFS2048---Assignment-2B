@@ -6,7 +6,7 @@ ConsoleApp
 main(number:int, output_spec:dict, input_paths:turple)</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>203</x><y>350</y><w>196</w><h>56</h></coordinates><panel_attributes>bg=gray
 Summarising
 -
-- tokens : list(string)
+
 -
 + createSummary(tokens:list(string))</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>728</x><y>161</y><w>329</w><h>56</h></coordinates><panel_attributes>bg=gray
 WordStatsManager
