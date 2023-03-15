@@ -1,0 +1,7 @@
+dog
+cat
+dog cat
+dog
+dog
+dog
+duck
