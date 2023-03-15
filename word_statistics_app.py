@@ -422,9 +422,8 @@ class WordStatsManager():
 def main(number, output_spec:dict, input_paths):
     __consoleApp.main(number, output_spec, input_paths)
 
-# Main entry point to the application
+# Main entry point to the application to intansiate services
 if __name__ == '__main__':
-    # Instansiate services
     __summarisingAccess:Summarising = Summarising()
     __tokenisingAccess = Tokenising()
     __formattingAccess = Formatting()
